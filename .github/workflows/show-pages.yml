@@ -27,4 +27,4 @@ jobs:
             echo "$code $(sha256sum f.json | cut -c1-64) $p"
           done
           echo "== peaks/manifest.json"
-          curl -sS "$base/peaks/manifest.json$q"
+          curl -fsS "$base/peaks/manifest.json$q" || echo "(取れない)"
