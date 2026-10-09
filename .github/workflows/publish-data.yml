@@ -1,9 +1,7 @@
 name: 地点 / OSM山頂：生成・検査
 
 on:
-  schedule:
-    # 毎月 1 日の日本時間 12:23。
-    - cron: '23 3 1 * *'
+  # yamamuki-data2 は検証用のコピーなので、毎月の定期実行は止めて手動実行だけにする。
   workflow_dispatch:
     inputs:
       source_date:
