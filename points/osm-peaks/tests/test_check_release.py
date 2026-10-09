@@ -2,9 +2,11 @@
 
 import copy
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from scripts.build_data import FILE_NAME, write_distribution
 from scripts.check_release import assess, validate
@@ -224,6 +226,8 @@ class CheckReleaseTests(unittest.TestCase):
 
 
 class DownloadUrlTests(unittest.TestCase):
+    # 検証用のコピー（yamamuki-data2）の Actions でも同じ URL を期待できるよう、リポジトリ名を固定する。
+    @patch.dict(os.environ, {"GH_REPO": "shohei0205/yamamuki-data"})
     def test_urls_match_channel_and_reject_invalid_targets(self):
         for channel, tag in (("stable", "osm-peaks-test"), ("dev", "osm-peaks-dev-test")):
             with tempfile.TemporaryDirectory() as directory:
