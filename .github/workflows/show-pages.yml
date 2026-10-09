@@ -1,0 +1,30 @@
+name: 検証用：公開中の Pages を表示する
+
+# yamamuki-data2 だけの検証用。公開中の catalog.json に載っている各ファイルを取り、
+# SHA-256 と peaks/manifest.json の中身をログに出す（クラウドから github.io を見られないため）。
+on:
+  push:
+    branches: [claude/data2-show-pages]
+
+permissions:
+  contents: read
+
+jobs:
+  show:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: 公開中のファイルを表示
+        run: |
+          base="https://shohei0205.github.io/yamamuki-data2"
+          q="?t=$(date +%s)"
+          curl -fsS "$base/catalog.json$q" -o catalog.json
+          echo "== catalog.json の manifests と histories"
+          jq -r '.manifests|keys[]' catalog.json
+          jq -r '.histories|keys[]' catalog.json
+          for p in $(jq -r '(.manifests|keys[]),(.histories|keys[])' catalog.json) points/catalog.json points/catalog-dev.json; do
+            code=$(curl -sS -o f.json -w '%{http_code}' "$base/$p$q")
+            echo "$code $(sha256sum f.json | cut -c1-64) $p"
+          done
+          echo "== peaks/manifest.json"
+          curl -sS "$base/peaks/manifest.json$q"

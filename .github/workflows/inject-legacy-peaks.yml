@@ -1,0 +1,71 @@
+name: 検証用：peaks を Pages に置く
+
+# yamamuki-data2 だけの検証用。本番の yamamuki-data と同じく、公開中のサイトに
+# 0.5.0 向けの互換データ（peaks/manifest.json と peaks/history.json）がある状態を作る。
+# 公開中の catalog.json を今のコードで読み、peaks/ を足して、今のコードの write_site で書き出す。
+on:
+  push:
+    branches: [claude/data2-legacy-peaks]
+
+permissions:
+  contents: read
+
+env:
+  LEGACY_TAG: peaks-20261009T112012Z-37923014859-1
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: publish-data-pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Pages の設定を確認
+        uses: actions/configure-pages@v6
+      - name: 公開中のサイトに peaks/ を足して書き出す
+        working-directory: points/osm-peaks
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PAGES_DIRECTORY: ${{ github.workspace }}/build/pages
+        run: |
+          gh release download "$LEGACY_TAG" --pattern manifest.json --dir "$RUNNER_TEMP/legacy"
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          from scripts import release_data as r
+          catalog = r.read_catalog()
+          assert catalog is not None, "公開中の catalog.json が取れない"
+          print("公開中の manifest:", sorted(catalog))
+          raw = Path(os.environ["RUNNER_TEMP"], "legacy", "manifest.json").read_bytes()
+          manifest = json.loads(raw)
+          histories = {k: list(v) for k, v in catalog.histories.items()}
+          tag = os.environ["LEGACY_TAG"]
+          repo = os.environ["GH_REPO"]
+          catalog["peaks/manifest.json"] = manifest
+          histories["peaks/history.json"] = [{
+              "kind": "snapshot", "publishedAt": None, "version": manifest["version"],
+              "releaseUrl": f"https://github.com/{repo}/releases/tag/{tag}",
+              "downloadUrl": manifest["downloadUrl"], "actionsRunUrl": None}]
+          r.write_site(catalog, histories)
+          out = Path(os.environ["PAGES_DIRECTORY"])
+          for f in sorted(out.rglob("*.json")):
+              print(hashlib.sha256(f.read_bytes()).hexdigest(), f.relative_to(out))
+          PY
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: build/pages
+      - id: deployment
+        uses: actions/deploy-pages@v5
