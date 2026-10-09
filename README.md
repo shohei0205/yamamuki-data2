@@ -2,7 +2,7 @@
 
 > [!WARNING]
 > このリポジトリは [shohei0205/yamamuki-data](https://github.com/shohei0205/yamamuki-data) の挙動の確認と、配信方式の移行手順を試すためのコピーです。アプリはここのデータを読みません。本番の変更は yamamuki-data で行ってください。
-> - **事故の再現中**: dev のファイルは、2026-10-07 の事故を起こした公開と同じ dev（782b469）に戻してある。再現が終わったら元に戻す
+> - コピー元: yamamuki-data の main（bf08eea）と dev（3a97830）、2026-10-09
 > - コピー側だけの変更（dev）: CODEOWNERS を shohei0205 だけにする、配布 URL のテストでリポジトリ名を固定する、この注意書き。定期実行と Dependabot は main の設定だけが使われるので、main 側で止めている
 
 山むきアプリ（[shohei0205/yamamuki](https://github.com/shohei0205/yamamuki)）が使うデータを作って配るためのリポジトリ。
